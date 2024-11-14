@@ -1,33 +1,44 @@
 import serial
-# 7F 02 57 28 30 4F 31 4E 03 03 55 вкл подсветки
-# 7F 02 57 28 30 4F 30 4F 03 03 54 откл подсветки
-# Configure the COM port
-port = "COM5"  # Replace with the appropriate COM port name
+
+
+port = "/dev/ttyUSB0"
 baudrate = 4800
-chunk=b'\x7f'+b'\x02'+b'\x57'+b'\x28'+b'\x30'+b'\x4f'+b'\x30'+b'\x4f'+b'\x03'+b'\x03'+b'\x54'
-try:
-    # Open the COM port
-    print("Serial connection established.")
-    ser = serial.Serial(port, baudrate=baudrate, bytesize=7, parity='E', stopbits=2, timeout=1, xonxoff=False,
-                        rtscts=False)
+# Open the COM port
+ser = serial.Serial(
+    port,
+    baudrate=baudrate,
+    bytesize=7,
+    parity="E",
+    stopbits=2,
+    timeout=1,
+    xonxoff=False,
+    rtscts=False,
+)
 
-    # Adjust the parameters as needed
-    # Send commands to the Arduino
-    while True:
+
+def translate_hex(topaz_command):
+    byte_values = bytes.fromhex(topaz_command)
+    return byte_values
+
+
+def TURN_LED():
+    """Turning the light by inputed command"""
+    try:
         command = input("Enter a command (e.g., 'ON', 'OFF'): ")
+        # for i in com:
+        print(command)
+        if str(command) == "ON":
+            light_on = translate_hex("7F 02 57 28 30 4F 31 4E 03 03 55")
+            ser.write(light_on)
+        elif str(command) == "OFF":
+            light_off = translate_hex("7F 02 57 28 30 4F 30 4F 03 03 54")
+            ser.write(light_off)
 
-        # Send the command to the Arduino
-       # for i in com:
-        ser.write(chunk)
+    except serial.SerialException as se:
+        print("Serial port error:", str(se))
 
-except serial.SerialException as se:
-    print("Serial port error:", str(se))
+    except KeyboardInterrupt:
+        pass
 
-except KeyboardInterrupt:
-    pass
-
-finally:
-    # Close the serial connection
-    if ser.is_open:
-        ser.close()
-        print("Serial connection closed.")
+while True:
+    TURN_LED()
